@@ -21,6 +21,7 @@ cols = ['yearID','lgID','teamID','franchID','divID','Rank','G','Ghome','W','L','
 
 teams_df.columns = cols
 
+#Drop unneeded columns
 drop_cols = ['lgID','franchID','divID','Rank','Ghome','L','DivWin','WCWin','LgWin','WSWin','SF',
              'name','park','attendance','BPF','PPF','teamIDBR','teamIDlahman45','teamIDretro',
              'franchID','franchName','active','NAassoc']
@@ -275,3 +276,58 @@ df['labels'] = labels
 attributes.append('labels')
 
 print(df.head())
+
+# Create new DataFrame using only variables to be included in models
+numeric_cols = ['G','R','AB','H','2B','3B','HR','BB','SO','SB','RA','ER','ERA',
+                'CG','SHO','SV','IPouts','HA','HRA','BBA','SOA','E','DP','FP',
+                'era_1','era_2','era_3','era_4','era_5','era_6','era_7','era_8','decade_1910',
+                'decade_1920','decade_1930','decade_1940','decade_1950','decade_1960','decade_1970',
+                'decade_1980','decade_1990','decade_2000','decade_2010','R_per_game','RA_per_game',
+                'mlb_rpg','labels','W']
+
+data = df[numeric_cols]
+print(data.head())
+
+# Split data DataFrame into train and test sets
+train = data.sample(frac=0.75, random_state=1)
+test = data.loc[~data.index.isin(train.index)]
+
+x_train = train[attributes]
+y_train = train['W']
+x_test = test[attributes]
+y_test = test['W']
+
+# Import `LinearRegression` from `sklearn.linear_model`
+from sklearn.linear_model import LinearRegression
+
+# Import `mean_absolute_error` from `sklearn.metrics`
+from sklearn.metrics import mean_absolute_error
+
+# Create Linear Regression model, fit model, and make predictions
+#Y=a+b*X + e, where a is intercept, b is slope of the line and e is error term.
+lr = LinearRegression(normalize=True)
+lr.fit(x_train, y_train)
+predictions = lr.predict(x_test)
+
+# Determine mean absolute error - MAE -- 1. Error = Actual values - Predicted values (individually),
+# 2. Absolute Value of all Error (A1, A2, An) 3. MAE = (A1 + A2 + ... An)/n where n = total number of training set
+mae = mean_absolute_error(y_test, predictions)
+
+print(lr.coef_)
+
+print(lr.intercept_)
+
+# Print `mae`
+print(mae)
+
+# Import `RidgeCV` from `sklearn.linear_model`
+from sklearn.linear_model import RidgeCV
+
+# Create Ridge Linear Regression model, fit model, and make predictions
+rrm = RidgeCV(alphas=(0.01, 0.1, 1.0, 10.0), normalize=True)
+rrm.fit(x_train, y_train)
+predictions_rrm = rrm.predict(x_test)
+
+# Determine mean absolute error
+mae_rrm = mean_absolute_error(y_test, predictions_rrm)
+print(mae_rrm)
